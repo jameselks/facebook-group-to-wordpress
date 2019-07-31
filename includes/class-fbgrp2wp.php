@@ -154,8 +154,25 @@ class Fbgrp2wp {
 
 		$plugin_admin = new Fbgrp2wp_Admin( $this->get_plugin_name(), $this->get_version() );
 
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+		// Admin styles and scripts
+		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'fbgrp2wp_admin_enqueue_styles' );
+		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'fbgrp2wp_admin_enqueue_scripts' );
+		
+		// Admin menu and page
+		$this->loader->add_action( 'admin_menu', $plugin_admin, 'fbgrp2wp_admin' );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'fbgrp2wp_admin_settings' );
+
+		// Primary methods - import events and generate JSON
+		$this->loader->add_action( 'fbgrp2wp_import_group_posts', $plugin_admin, 'fbgrp2wp_import_group_posts' );
+
+		// Exchange short-lived FB token for long-lived FB token
+		$this->loader->add_action( 'wp_ajax_fbgrp2wp_fb_tokenexchange', $plugin_admin, 'fbgrp2wp_fb_tokenexchange' );
+
+		//Check token expiry
+		$this->loader->add_action( 'fbgrp2wp_fb_tokenexpiry', $plugin_admin, 'fbgrp2wp_fb_tokenexpiry' );
+
+		// Write log to log file
+		$this->loader->add_action( 'fbgrp2wp_log', $plugin_admin, 'e2_log', 10, 2 );
 
 	}
 
@@ -170,8 +187,12 @@ class Fbgrp2wp {
 
 		$plugin_public = new Fbgrp2wp_Public( $this->get_plugin_name(), $this->get_version() );
 
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
+		//Register styles and scripts
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'fbgrp2wp_register_styles' );
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'fbgrp2wp_register_scripts' );
+
+		//Event post type
+		$this->loader->add_action( 'init', $plugin_public, 'fbgrp2wp_create_post_type' );
 
 	}
 
