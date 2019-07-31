@@ -10,7 +10,7 @@
  *
  * @link              jameselks.com
  * @since             1.0.0
- * @package           Facebook_Group_To_Wordpress
+ * @package           Fbgrp2wp
  *
  * @wordpress-plugin
  * Plugin Name:       Facebook Group to Wordpress
@@ -21,7 +21,7 @@
  * Author URI:        jameselks.com
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:       facebook-group-to-wordpress
+ * Text Domain:       fbgrp2wp
  * Domain Path:       /languages
  */
 
@@ -35,34 +35,34 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'FACEBOOK_GROUP_TO_WORDPRESS_VERSION', '1.0.0' );
+define( 'FBGRP2WP_VERSION', '1.0.0' );
 
 /**
  * The code that runs during plugin activation.
- * This action is documented in includes/class-facebook-group-to-wordpress-activator.php
+ * This action is documented in includes/class-fbgrp2wp-activator.php
  */
-function activate_facebook_group_to_wordpress() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-facebook-group-to-wordpress-activator.php';
-	Facebook_Group_To_Wordpress_Activator::activate();
+function activate_fbgrp2wp() {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-fbgrp2wp-activator.php';
+	Fbgrp2wp_Activator::activate();
 }
 
 /**
  * The code that runs during plugin deactivation.
- * This action is documented in includes/class-facebook-group-to-wordpress-deactivator.php
+ * This action is documented in includes/class-fbgrp2wp-deactivator.php
  */
-function deactivate_facebook_group_to_wordpress() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-facebook-group-to-wordpress-deactivator.php';
-	Facebook_Group_To_Wordpress_Deactivator::deactivate();
+function deactivate_fbgrp2wp() {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-fbgrp2wp-deactivator.php';
+	Fbgrp2wp_Deactivator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_facebook_group_to_wordpress' );
-register_deactivation_hook( __FILE__, 'deactivate_facebook_group_to_wordpress' );
+register_activation_hook( __FILE__, 'activate_fbgrp2wp' );
+register_deactivation_hook( __FILE__, 'deactivate_fbgrp2wp' );
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-facebook-group-to-wordpress.php';
+require plugin_dir_path( __FILE__ ) . 'includes/class-fbgrp2wp.php';
 
 /**
  * Begins execution of the plugin.
@@ -73,10 +73,10 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-facebook-group-to-wordpres
  *
  * @since    1.0.0
  */
-function run_facebook_group_to_wordpress() {
+function run_fbgrp2wp() {
 
-	$plugin = new Facebook_Group_To_Wordpress();
+	$plugin = new Fbgrp2wp();
 	$plugin->run();
 
 }
-run_facebook_group_to_wordpress();
+run_fbgrp2wp();

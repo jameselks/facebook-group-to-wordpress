@@ -8,8 +8,8 @@
  * @link       jameselks.com
  * @since      1.0.0
  *
- * @package    Facebook_Group_To_Wordpress
- * @subpackage Facebook_Group_To_Wordpress/public/partials
+ * @package    Fbgrp2wp
+ * @subpackage Fbgrp2wp/public/partials
  */
 ?>
 

@@ -22,7 +22,7 @@
  * @link       jameselks.com
  * @since      1.0.0
  *
- * @package    Facebook_Group_To_Wordpress
+ * @package    Fbgrp2wp
  */
 
 // If uninstall not called from WordPress, then exit.

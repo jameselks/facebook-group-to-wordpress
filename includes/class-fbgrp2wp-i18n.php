@@ -9,8 +9,8 @@
  * @link       jameselks.com
  * @since      1.0.0
  *
- * @package    Facebook_Group_To_Wordpress
- * @subpackage Facebook_Group_To_Wordpress/includes
+ * @package    Fbgrp2wp
+ * @subpackage Fbgrp2wp/includes
  */
 
 /**
@@ -20,11 +20,11 @@
  * so that it is ready for translation.
  *
  * @since      1.0.0
- * @package    Facebook_Group_To_Wordpress
- * @subpackage Facebook_Group_To_Wordpress/includes
+ * @package    Fbgrp2wp
+ * @subpackage Fbgrp2wp/includes
  * @author     James Elks <republicofelk@gmail.com>
  */
-class Facebook_Group_To_Wordpress_i18n {
+class Fbgrp2wp_i18n {
 
 
 	/**
@@ -35,7 +35,7 @@ class Facebook_Group_To_Wordpress_i18n {
 	public function load_plugin_textdomain() {
 
 		load_plugin_textdomain(
-			'facebook-group-to-wordpress',
+			'fbgrp2wp',
 			false,
 			dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/'
 		);

@@ -6,8 +6,8 @@
  * @link       jameselks.com
  * @since      1.0.0
  *
- * @package    Facebook_Group_To_Wordpress
- * @subpackage Facebook_Group_To_Wordpress/includes
+ * @package    Fbgrp2wp
+ * @subpackage Fbgrp2wp/includes
  */
 
 /**
@@ -17,11 +17,11 @@
  * the plugin, and register them with the WordPress API. Call the
  * run function to execute the list of actions and filters.
  *
- * @package    Facebook_Group_To_Wordpress
- * @subpackage Facebook_Group_To_Wordpress/includes
+ * @package    Fbgrp2wp
+ * @subpackage Fbgrp2wp/includes
  * @author     James Elks <republicofelk@gmail.com>
  */
-class Facebook_Group_To_Wordpress_Loader {
+class Fbgrp2wp_Loader {
 
 	/**
 	 * The array of actions registered with WordPress.

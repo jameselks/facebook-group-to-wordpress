@@ -9,8 +9,8 @@
  * @link       jameselks.com
  * @since      1.0.0
  *
- * @package    Facebook_Group_To_Wordpress
- * @subpackage Facebook_Group_To_Wordpress/includes
+ * @package    Fbgrp2wp
+ * @subpackage Fbgrp2wp/includes
  */
 
 /**
@@ -23,11 +23,11 @@
  * version of the plugin.
  *
  * @since      1.0.0
- * @package    Facebook_Group_To_Wordpress
- * @subpackage Facebook_Group_To_Wordpress/includes
+ * @package    Fbgrp2wp
+ * @subpackage Fbgrp2wp/includes
  * @author     James Elks <republicofelk@gmail.com>
  */
-class Facebook_Group_To_Wordpress {
+class Fbgrp2wp {
 
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
@@ -35,7 +35,7 @@ class Facebook_Group_To_Wordpress {
 	 *
 	 * @since    1.0.0
 	 * @access   protected
-	 * @var      Facebook_Group_To_Wordpress_Loader    $loader    Maintains and registers all hooks for the plugin.
+	 * @var      Fbgrp2wp_Loader    $loader    Maintains and registers all hooks for the plugin.
 	 */
 	protected $loader;
 
@@ -67,12 +67,12 @@ class Facebook_Group_To_Wordpress {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		if ( defined( 'FACEBOOK_GROUP_TO_WORDPRESS_VERSION' ) ) {
-			$this->version = FACEBOOK_GROUP_TO_WORDPRESS_VERSION;
+		if ( defined( 'FBGRP2WP_VERSION' ) ) {
+			$this->version = FBGRP2WP_VERSION;
 		} else {
 			$this->version = '1.0.0';
 		}
-		$this->plugin_name = 'facebook-group-to-wordpress';
+		$this->plugin_name = 'fbgrp2wp';
 
 		$this->load_dependencies();
 		$this->set_locale();
@@ -86,10 +86,10 @@ class Facebook_Group_To_Wordpress {
 	 *
 	 * Include the following files that make up the plugin:
 	 *
-	 * - Facebook_Group_To_Wordpress_Loader. Orchestrates the hooks of the plugin.
-	 * - Facebook_Group_To_Wordpress_i18n. Defines internationalization functionality.
-	 * - Facebook_Group_To_Wordpress_Admin. Defines all hooks for the admin area.
-	 * - Facebook_Group_To_Wordpress_Public. Defines all hooks for the public side of the site.
+	 * - Fbgrp2wp_Loader. Orchestrates the hooks of the plugin.
+	 * - Fbgrp2wp_i18n. Defines internationalization functionality.
+	 * - Fbgrp2wp_Admin. Defines all hooks for the admin area.
+	 * - Fbgrp2wp_Public. Defines all hooks for the public side of the site.
 	 *
 	 * Create an instance of the loader which will be used to register the hooks
 	 * with WordPress.
@@ -103,33 +103,33 @@ class Facebook_Group_To_Wordpress {
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-facebook-group-to-wordpress-loader.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbgrp2wp-loader.php';
 
 		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-facebook-group-to-wordpress-i18n.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-fbgrp2wp-i18n.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-facebook-group-to-wordpress-admin.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-fbgrp2wp-admin.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-facebook-group-to-wordpress-public.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-fbgrp2wp-public.php';
 
-		$this->loader = new Facebook_Group_To_Wordpress_Loader();
+		$this->loader = new Fbgrp2wp_Loader();
 
 	}
 
 	/**
 	 * Define the locale for this plugin for internationalization.
 	 *
-	 * Uses the Facebook_Group_To_Wordpress_i18n class in order to set the domain and to register the hook
+	 * Uses the Fbgrp2wp_i18n class in order to set the domain and to register the hook
 	 * with WordPress.
 	 *
 	 * @since    1.0.0
@@ -137,7 +137,7 @@ class Facebook_Group_To_Wordpress {
 	 */
 	private function set_locale() {
 
-		$plugin_i18n = new Facebook_Group_To_Wordpress_i18n();
+		$plugin_i18n = new Fbgrp2wp_i18n();
 
 		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 
@@ -152,7 +152,7 @@ class Facebook_Group_To_Wordpress {
 	 */
 	private function define_admin_hooks() {
 
-		$plugin_admin = new Facebook_Group_To_Wordpress_Admin( $this->get_plugin_name(), $this->get_version() );
+		$plugin_admin = new Fbgrp2wp_Admin( $this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
@@ -168,7 +168,7 @@ class Facebook_Group_To_Wordpress {
 	 */
 	private function define_public_hooks() {
 
-		$plugin_public = new Facebook_Group_To_Wordpress_Public( $this->get_plugin_name(), $this->get_version() );
+		$plugin_public = new Fbgrp2wp_Public( $this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
@@ -199,7 +199,7 @@ class Facebook_Group_To_Wordpress {
 	 * The reference to the class that orchestrates the hooks with the plugin.
 	 *
 	 * @since     1.0.0
-	 * @return    Facebook_Group_To_Wordpress_Loader    Orchestrates the hooks of the plugin.
+	 * @return    Fbgrp2wp_Loader    Orchestrates the hooks of the plugin.
 	 */
 	public function get_loader() {
 		return $this->loader;

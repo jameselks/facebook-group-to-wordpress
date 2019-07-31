@@ -6,8 +6,8 @@
  * @link       jameselks.com
  * @since      1.0.0
  *
- * @package    Facebook_Group_To_Wordpress
- * @subpackage Facebook_Group_To_Wordpress/includes
+ * @package    Fbgrp2wp
+ * @subpackage Fbgrp2wp/includes
  */
 
 /**
@@ -16,11 +16,11 @@
  * This class defines all code necessary to run during the plugin's deactivation.
  *
  * @since      1.0.0
- * @package    Facebook_Group_To_Wordpress
- * @subpackage Facebook_Group_To_Wordpress/includes
+ * @package    Fbgrp2wp
+ * @subpackage Fbgrp2wp/includes
  * @author     James Elks <republicofelk@gmail.com>
  */
-class Facebook_Group_To_Wordpress_Deactivator {
+class Fbgrp2wp_Deactivator {
 
 	/**
 	 * Short Description. (use period)
