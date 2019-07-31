@@ -122,6 +122,11 @@ class Fbgrp2wp {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-fbgrp2wp-public.php';
 
+		/**
+		 * The Facebook SDK.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/libs/facebook-sdk-v4-5.0.0/autoload.php';
+
 		$this->loader = new Fbgrp2wp_Loader();
 
 	}
@@ -168,11 +173,8 @@ class Fbgrp2wp {
 		// Exchange short-lived FB token for long-lived FB token
 		$this->loader->add_action( 'wp_ajax_fbgrp2wp_fb_tokenexchange', $plugin_admin, 'fbgrp2wp_fb_tokenexchange' );
 
-		//Check token expiry
-		$this->loader->add_action( 'fbgrp2wp_fb_tokenexpiry', $plugin_admin, 'fbgrp2wp_fb_tokenexpiry' );
-
 		// Write log to log file
-		$this->loader->add_action( 'fbgrp2wp_log', $plugin_admin, 'e2_log', 10, 2 );
+		$this->loader->add_action( 'fbgrp2wp_log', $plugin_admin, 'fbgrp2wp_log', 10, 2 );
 
 	}
 

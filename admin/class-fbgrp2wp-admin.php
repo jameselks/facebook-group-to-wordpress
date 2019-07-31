@@ -72,7 +72,7 @@ class Fbgrp2wp_Admin {
 			* @since    1.0.0
 			*/
 	
-			echo require "partials/fbgrp2wp-admin-display.php"; 
+			echo require "partials/fbgrp2wp-admin-display.php";
 	
 		}
 	
@@ -85,7 +85,8 @@ class Fbgrp2wp_Admin {
 			register_setting( 'fbgrp2wp-group', 'fb_longtoken' );
 			register_setting( 'fbgrp2wp-group', 'fb_app_id' );
 			register_setting( 'fbgrp2wp-group', 'fb_app_secret' );
-			register_setting( 'fbgrp2wp-group', 'fbgrpfb_get_events' );
+			register_setting( 'fbgrp2wp-group', 'fb_group_id' );
+			register_setting( 'fbgrp2wp-group', 'fb_get_events' );
 		}
 	
 		public function fbgrp2wp_admin_enqueue_styles() {
@@ -94,7 +95,7 @@ class Fbgrp2wp_Admin {
 			*
 			* @since    1.0.0
 			*/
-			wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/fbgrp-admin.css', array(), $this->version, 'all' );
+			wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/fbgrp2wp-admin.css', array(), $this->version, 'all' );
 		}
 	
 		public function fbgrp2wp_admin_enqueue_scripts() {
@@ -103,66 +104,30 @@ class Fbgrp2wp_Admin {
 			*
 			* @since    1.0.0
 			*/
-			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/fbgrp-admin.js', array( 'jquery' ), $this->version, false );
-			wp_localize_script( $this->plugin_name, 'fbgrpjs', array( 'fbAppId' => get_option('fb_app_id') ) );
+			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/fbgrp2wp-admin.js', array( 'jquery' ), $this->version, false );
+			wp_localize_script( $this->plugin_name, 'fbgrp2wpjs', array( 'fbAppId' => get_option('fb_app_id') ) );
 		}
 
-		public function fbgrp2wp_fb_tokenexpiry( $token ) {
-		/*█████████████████████████████████████████████████████
-			* Check the expiry date of the token.
-			*
-			* @since    1.0.0
-			*/
-	
-			$token = get_option('fb_longtoken');
-			do_action('fbgrp2wp_log', 'Start fbgrp2wp_fb_tokenexpiry', true);
-	
-			// Create the Facebook object.
-			$fb = new Facebook\Facebook([
-				'app_id' => get_option('fb_app_id'),
-				'app_secret' => get_option('fb_app_secret'),
-				'default_graph_version' => 'v4.0',
-				'default_access_token' => $token,
-			]);
-	
-			// Create the Facebook Graph request (but don't execute - that happens later).
-			$request = $fb->request(
-				'GET',
-				'/debug_token?input_token=' . $token
-			);
-	
-			// Set the max script timeout to 20s from now
-			set_time_limit(10);
-	
-			// Send the request to Graph.
-			try {
-				$response = $fb->getClient()->sendRequest($request);
-	
-			} catch(Facebook\Exceptions\FacebookResponseException $e) {
-				// When Graph returns an error
-				$fb_error = 'Facebook Graph returned an error: ' . $e->getMessage();
-				do_action('fbgrp2wp_log', $fb_error, true);
-				exit;
-	
-			} catch(Facebook\Exceptions\FacebookSDKException $e) {
-				// When validation fails or other local issues
-				$fb_error = 'Facebook SDK returned an error: ' . $e->getMessage();
-				do_action('fbgrp2wp_log', $fb_error, true);
-				exit;
-	
+		public function fbgrp2wp_log( $text, $timestamp = false ) {
+			/*█████████████████████████████████████████████████████
+			 * Write text to log file.
+			 *
+			 * @since    1.0.0
+			 */	
+		
+				// Add timestamp
+				if ($timestamp) {
+					$text = '[' . current_time('Y-m-d h:i:sa') . '] ' . $text;	
+				}
+		
+				$text = $text . PHP_EOL;
+		
+				if (!file_exists(ABSPATH . 'wp-content/uploads/fbgrp2wplog')) {
+					wp_mkdir_p(ABSPATH . 'wp-content/uploads/fbgrp2wplog');
+				}	
+				file_put_contents(ABSPATH . 'wp-content/uploads/fbgrp2wplog/fbgrp2wplog_'.current_time('Y-m-d').'.txt', $text, FILE_APPEND);
 			}
-	
-			// Process the Graph response.
-			$token = $response->getGraphObject();
 
-			$notify = new DateTime(date("Y-m-d", strtotime('+10 days')));
-			$token_expires = $token['expires_at'];
-			$expires_days = $notify->diff($token_expires)->format('%a');
-			
-			do_action('fbgrp2wp_log', 'Finish fbgrp2wp_fb_tokenexpiry - ' . $expires_days . ' days before expiry', true);
-	
-		}
-	
 		public function fbgrp2wp_fb_tokenexchange() {
 		/*█████████████████████████████████████████████████████
 			* Exchange a short-lived Facebook authentication for a long-lived token.
@@ -207,9 +172,11 @@ class Fbgrp2wp_Admin {
 			// Add the long-lived token to the plugin options
 			update_option( 'fb_longtoken', $accessToken );
 	
-			//echo $accessToken;
 			$_SESSION['fb_access_token'] = (string) $accessToken;
 	
+			// Log the successful token exchange.
+			do_action('fbgrp2wp_log', 'Long-lived access token is ' . $accessToken . '.', true);
+
 			// User is logged in!
 			wp_die();
 		}
@@ -259,7 +226,7 @@ class Fbgrp2wp_Admin {
 			update_post_meta($post_id, 'fbgrp2wp_fb_cover', $cover_url);
 		}
 	
-		public function fbgrp2wp_import_events( $echo_results ) {
+		public function fbgrp2wp_import_group_posts( $echo_results ) {
 		/*█████████████████████████████████████████████████████
 			* Import Facebook events.
 			*
@@ -284,10 +251,9 @@ class Fbgrp2wp_Admin {
 			// Create the Facebook Graph request (but don't execute - that happens later).
 			$request = $fb->request(
 				'GET',
-				'/me/events',
+				get_option('fb_group_id') . '/feed',
 				array(
-					'fields' => 'id,name,description,cover,start_time,place,updated_time',
-					//'type' => 'attending',
+					'fields' => 'updated_time,message,id,link,attachments,comments,likes,reactions',
 					'limit' => get_option('fb_get_events')
 				)
 			);
@@ -300,7 +266,7 @@ class Fbgrp2wp_Admin {
 				$response = $fb->getClient()->sendRequest($request);
 	
 			} catch(Facebook\Exceptions\FacebookResponseException $e) {
-				// When Graph returns an error
+				// If Graph returns an error
 				$fb_error = 'Facebook Graph returned an error: ' . $e->getMessage();
 				do_action('fbgrp2wp_log', $fb_error, true);
 				if($echo_results) {
@@ -309,7 +275,7 @@ class Fbgrp2wp_Admin {
 				exit;
 	
 			} catch(Facebook\Exceptions\FacebookSDKException $e) {
-				// When validation fails or other local issues
+				// If validation fails or other local issues
 				$fb_error = 'Facebook SDK returned an error: ' . $e->getMessage();
 				do_action('fbgrp2wp_log', $fb_error, true);
 				if($echo_results) {

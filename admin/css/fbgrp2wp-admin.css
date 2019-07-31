@@ -3,34 +3,34 @@
  * included in this file.
  */
 
- #fbgrp h2 {
+ #fbgrp2wp h2 {
 	font-weight: bold;
 	text-transform: uppercase;
 	margin-bottom: 0.5em;
 }
 
-#fbgrp #fbgrp-settings div.form-table {
+#fbgrp2wp #fbgrp2wp-settings div.form-table {
 	margin: 2em 0;
 }
 
-#fbgrp .form-table input {
+#fbgrp2wp .form-table input {
 	display:block;
 	width: 1400px;
 	max-width: 100%;
 }
 
-#fbgrp input.button {
+#fbgrp2wp input.button {
 	margin-top:1em;
 }
 
-#fbgrp #fbgrp-settings div {
+#fbgrp2wp #fbgrp2wp-settings div {
 	margin: 1em 0;
 }
 
-#fbgrp #fbgrp-settings div label {
+#fbgrp2wp #fbgrp2wp-settings div label {
 	font-weight: bold;
 }
 
-#fbgrp #fbgrp-settings div span {
+#fbgrp2wp #fbgrp2wp-settings div span {
 	display: block;
 }

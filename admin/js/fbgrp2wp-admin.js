@@ -38,29 +38,34 @@ function checkLoginState() {
 window.fbAsyncInit = function() {
 
 	jQuery('#status').append( '<p>Downloading the Facebook Javascript SDK.</p>' );
-	jQuery('#status').append( '<p>Using app ID ' + fbgrpjs.fbAppId + '.</p>' );
+	jQuery('#status').append( '<p>Using app ID ' + fbgrp2wpjs.fbAppId + '.</p>' );
+
+	console.log();
 
 	FB.init({
-		appId      : fbgrpjs.fbAppId, //'490280357839488',
+		appId      : fbgrp2wpjs.fbAppId, //'490280357839488',
 		cookie     : true,  // enable cookies to allow the server to access the session
 		xfbml      : true,  // parse social plugins on this page
 		version    : 'v4.0' // use graph api version 4.0
 	});
 
+	FB.AppEvents.logPageView();
+
 	FB.getLoginStatus(function(response) {
+		console.log(response);
 		statusChangeCallback(response, false);
 	});
 
 };
 
 // Load the SDK asynchronously
-(function(d, s, id) {
+(function(d, s, id){
 	var js, fjs = d.getElementsByTagName(s)[0];
-	if (d.getElementById(id)) return;
+	if (d.getElementById(id)) {return;}
 	js = d.createElement(s); js.id = id;
-	js.src = '//connect.facebook.net/en_US/sdk.js';
+	js.src = "https://connect.facebook.net/en_US/sdk.js";
 	fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));
+  }(document, 'script', 'facebook-jssdk'));
 
 // Here we run a very simple test of the Graph API after login is successful. See statusChangeCallback() for when this call is made.
 function showStatus() {
@@ -76,13 +81,17 @@ function exchangeToken() {
 		type: 'post',
 		url: ajaxurl,
 		data: {
-			'action': 'fbgrp_fb_tokenexchange'
+			'action': 'fbgrp2wp_fb_tokenexchange'
 		},
 		success: function(result){
 			jQuery('#status').append( '<p>Long-lived token: ' + result + '</p>' );
 			jQuery('#status').append( '<p>Done!</p>' );
 			location.reload();
+		},
+		error: function(result){
+			console.log(result);
 		}
+		
 	});			
 
 }
