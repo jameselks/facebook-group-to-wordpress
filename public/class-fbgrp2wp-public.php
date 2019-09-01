@@ -84,15 +84,16 @@ class Fbgrp2wp_Public {
 	 */
 
 		register_post_type( 
-			'fbgrp2wp_events',
+			'fbgrp2wp_posts',
 			array(
 				'labels' => array(
 					'name' 			=> __( 'Facebook Group posts' ),
 					'singular_name'	=> __( 'Facebook Group post' )
 					),
-				'public' 	=> false,
+				'public' 	=> true,
 				'show_ui'	=> true,
 				'supports' 	=> array( 'title', 'editor', 'author', 'thumbnail', 'comments', 'custom-fields' ),
+				'has_archive' => true,
 				)
 			);
 	}

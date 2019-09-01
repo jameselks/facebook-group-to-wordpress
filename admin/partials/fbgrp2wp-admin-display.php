@@ -13,7 +13,7 @@
  */
 
 if (isset($_POST['import'])) {
-	do_action('fbgrp2wp_import_feed', true);
+	do_action('fbgrp2wp_import_group_posts', true);
 }
 
 ?>

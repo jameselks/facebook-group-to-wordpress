@@ -1,5 +1,5 @@
 <?php
-
+define('ALLOW_UNFILTERED_UPLOADS', true);
 /**
  * The admin-specific functionality of the plugin.
  *
@@ -181,51 +181,130 @@ class Fbgrp2wp_Admin {
 			wp_die();
 		}
 
-		public function fbgrp2wp_insert_image($post_id, $cover_url) {
+		public function fbgrp2wp_insert_media($post_id, $post_attachments) {
 		/*█████████████████████████████████████████████████████
 			* Download and add image as featured image to post.
 			*
 			* @since    1.0.0
 			*/
-	
+
+			//USE:
+			//https://developer.wordpress.org/reference/functions/media_handle_sideload/
+
+			do_action('fbgrp2wp_log', 'fbgrp2wp_insert_media - Start', true);
+
 			include_once(ABSPATH . "wp-includes/pluggable.php");
 			include_once(ABSPATH . "wp-admin/includes/media.php");
 			include_once(ABSPATH . "wp-admin/includes/file.php");
 			include_once(ABSPATH . "wp-admin/includes/image.php");
-	
-			//Download the image from the specified URL and attach it to the post
-			$media = media_sideload_image($cover_url, $post_id);
-			
-			//If successful, attach it as the cover image
-			if ( !empty($media) && !is_wp_error($media) ){
+
+			foreach ($post_attachments as $i => $attachment) {
 				
-				$args = array(
-					'post_type' => 'attachment',
-					'posts_per_page' => -1,
-					'post_status' => 'any',
-					'post_parent' => $post_id
-					);
-				$attachments = get_posts($args);
-				
-				if ( isset($attachments) && is_array($attachments) ) {
-	
-					foreach($attachments as $attachment){
-	
-						$cover_url = wp_get_attachment_image_src( $attachment->ID, 'full' );
-	
-						if ( strpos($media, $cover_url[0]) !== false ) {
-							set_post_thumbnail($post_id, $attachment->ID);
-							break;
+				// Set the max script timeout to 15s from now
+				set_time_limit(15);		
+
+				if ($attachment['subattachments']) {
+					
+					foreach ($attachment['subattachments'] as $k => $subattachment) {
+
+						/*
+						* Build the $file_array with
+						* $url = the url of the image
+						* $temp = storing the image in wordpress
+						*/
+						
+						$url = $subattachment['media']['image']['src'];
+						$tmp = download_url( $url );
+						$path_noquery = explode("?", $url);
+						$filename = basename($path_noquery[0]);
+
+						$file_array = array(
+							'name' => $filename,
+							'tmp_name' => $tmp
+						);
+						
+						// Check for download errors, if there are error unlink the temp file name
+						if ( is_wp_error( $tmp ) ) {
+							@unlink( $file_array[ 'tmp_name' ] );
+							//return $tmp;
+							echo 'ONE:';
+							print_r($tmp);
 						}
-	
+						
+						/**
+						 * now we can actually use media_handle_sideload
+						 * we pass it the file array of the file to handle
+						 * and the post id of the post to attach it to
+						 * $post_id can be set to '0' to not attach it to any particular post
+						 */			
+						$id = media_handle_sideload( $file_array, $post_id );
+						
+						/**
+						 * We don't want to pass something to $id
+						 * if there were upload errors.
+						 * So this checks for errors
+						 */
+						if ( is_wp_error( $id ) ) {
+							@unlink( $file_array['tmp_name'] );
+							//return $id;
+							echo 'TWO:';
+							print_r($id);
+						}
+
+
 					}
+
+				} else {
+					
+					if($attachment['media']['source']){
+						// Nothing
+					}
+
 				}
-	
+
 			}
-	
-			update_post_meta($post_id, 'fbgrp2wp_fb_cover', $cover_url);
+
+			do_action('fbgrp2wp_log', 'fbgrp2wp_insert_media - Finish', true);
+			
 		}
+
+		public function fbgrp2wp_insert_comments($post_id, $post_comments, $post_parent) {
+			/*█████████████████████████████████████████████████████
+				* Download and attach comments to the post.
+				*
+				* @since    1.0.0
+				*/	
+		
+				do_action('fbgrp2wp_log', 'fbgrp2wp_insert_comments - Start', true);
 	
+				if (!$post_parent) {
+					$post_parent = 0;
+				}
+
+				foreach ($post_comments as $i => $comment) {
+					
+					// Set the max script timeout to 15s from now
+					set_time_limit(15);
+
+					$comment_data = array(
+						'comment_post_ID'	=> $post_id,
+						'comment_author'	=> 'Unknown',
+						'comment_content'	=> $comment['message'],
+						'comment_date'		=> $comment['created_time']->format('Y-m-d g:ia'),
+						'comment_parent' 	=> $post_parent,
+						'comment_approved'	=> '1'
+					);
+					$comment_id = wp_insert_comment($comment_data);
+					
+					if ($comment['comments']) {
+						apply_filters('fbgrp2wp_insert_comments', $post_id, $comment['comments'], $comment_id);
+					}
+
+				}
+
+				do_action('fbgrp2wp_log', 'fbgrp2wp_insert_comments - End', true);
+		}
+		
 		public function fbgrp2wp_import_group_posts( $echo_results ) {
 		/*█████████████████████████████████████████████████████
 			* Import Facebook events.
@@ -233,7 +312,7 @@ class Fbgrp2wp_Admin {
 			* @since    1.0.0
 			*/	
 	
-			do_action('fbgrp2wp_log', 'Start fbgrp2wp_process_events', true);
+			do_action('fbgrp2wp_log', 'fbgrp2wp_process_events - Start', true);
 	
 			if ($echo_results) {
 				echo '<div id="progress"><p>Connecting to Facebook</p>';
@@ -253,7 +332,7 @@ class Fbgrp2wp_Admin {
 				'GET',
 				get_option('fb_group_id') . '/feed',
 				array(
-					'fields' => 'updated_time,message,id,link,attachments,comments,likes,reactions',
+					'fields' => 'updated_time,message,id,link,attachments{media,subattachments,title},comments{id,created_time,message,comments{id,created_time,user_likes,message,comments}}',
 					'limit' => get_option('fb_get_events')
 				)
 			);
@@ -282,171 +361,78 @@ class Fbgrp2wp_Admin {
 					echo $fb_error;
 				}
 				exit;
-	
 			}
 	
 			// Process the Graph response.
-			$events = $response->getGraphEdge();
+			$posts = $response->getGraphEdge();
 			
 			//Set some vars
-			$totalEvents = count($events);
+			$totalPosts = count($posts);
 			$today = new DateTime(current_time('Y-m-d'));
-			$before_today = false;
 	
-			//Cycle through each event
-			foreach ($events as $index => $e) {
+			//Cycle through each post
+			foreach ($posts as $index => $post) {
 	
 				if ($echo_results) {
-					echo '<p>Processing event ' . (intval($index) + 1) . ' of ' . (intval($totalEvents)) . '<br />';
+					echo '<p>Processing post ' . (intval($index) + 1) . ' of ' . (intval($totalPosts)) . '<br />';
 					flush();
 				}
 	
 				// Set the max script timeout to 15s from now
 				set_time_limit(15);
-	
-				$e_id = $e['id'];
-				$e_name = $e['name'];
-				$e_description = wp_strip_all_tags($e['description']);
-				$e_cover = $e['cover']['source'];
 				
-				// Date stuff
-				$e_start = $e['start_time']->format('Y-m-d g:ia'); //Format the start date
-				$e_start_datetime = new DateTime($e_start); //Convert the start date into a PHP datetime object
-				if ((date_diff($today,$e_start_datetime)->format('%r%a')) < -2) { //Set a flag to stop the loop for older events.
-					$before_today = true;
-					$log = $log . 'Processed ' . (intval($index) + 1) . ' of ' . (intval($totalEvents)) . ' events.' . PHP_EOL;
+				// Basic fields
+				$post_id 			= $post['id'];
+				$post_link			= $post['link'];
+				$post_message		= $post['message'];
+				$post_attachments	= $post['attachments'];
+				$post_comments		= $post['comments'];
+
+				// If no attachments, then skip
+				// *********** TURN INTO ADMIN OPTION
+				if (!$post_attachments) { continue; }
+
+				// Date
+				$post_updated 	= $post['updated_time']->format('Y-m-d g:ia');				
+
+				// Insert the new post
+				$this_post = array(
+					'post_type' 		=> 'fbgrp2wp_posts',
+					'post_name'			=> $post_id,
+					'post_date'			=> $post_updated,
+					'post_title' 		=> wp_strip_all_tags($post_id),
+					'post_content' 		=> wp_strip_all_tags($post_message),
+					'comment_status'	=> 'closed',
+					'post_status' 		=> 'publish',
+				);		
+				$this_id = wp_insert_post($this_post);
+
+				// Add media to post
+				if ($post_attachments) {
+					apply_filters('fbgrp2wp_insert_media', $this_id, $post_attachments);
 				}
-				$e_updated = $e['updated_time']->format('Y-m-d g:ia');
-	
-				//Location name
-				if ( !empty($e['place']['name']) ) {
-						$e_location_name = $e['place']['name'];
-				}
-	
-				//Location address
-				if ( !empty($e['place']['location']['street']) && !empty($e['place']['location']['city']) ) {
-					$e_location_address = $e['place']['location']['street'] .', ' . $e['place']['location']['city'];
-				}
-	
-				$e_location = $e_location_name . ' &mdash; ' . $e_location_address;
-	
-				//Latitude and longitude
-				$e_latitude = $e['place']['location']['latitude'];
-				$e_longitude = $e['place']['location']['longitude'];
-	
-				// Try and geocode if there is a location name, but no lat/lng
-				if (!empty($e_location_name) && empty($e_latitude) && empty($e_longitude)) {
-						$log = $log . 'Attempting geocode for address: ' . $e_location_name . PHP_EOL;
-						$log = $log . 'Facebook event ID: ' . $e_id . PHP_EOL;
-						$geocode = apply_filters('fbgrp2wp_geocode_place', $e_location_name, get_option('radius'), array('lat'=>get_option('radius_lat'),'lng'=>get_option('radius_lng')), get_option('api_key_gp'));
-						if (!empty($geocode)) {
-							$log = $log . 'Geocode successful: ' . $geocode['lat'] . ', ' . $geocode['lng'] . PHP_EOL;
-							$e_latitude = $geocode['lat'];
-							$e_longitude = $geocode['lng'];
-							$e_location = $e_location_name;
-						} else {
-							$log = $log . 'Geocode unsuccessful.' . PHP_EOL;
-							$e_location = '';
-						};
-				};
-	
-				// The Query
-				$args = array (
-					'post_type' => 'fbgrp2wp_events',
-					'posts_per_page' => -1,
-					'meta_key' => 'fbgrp2wp_fb_id',
-					'meta_query' => array(
-						'key'		=> 'fbgrp2wp_fb_id',
-						'value'		=> $e_id,
-						),
-					);
-				$the_query = new WP_Query( $args );
-	
-				// The Loop - HAVE POSTS
-				if ( $the_query->have_posts() ) {
-					
-					$do_update_meta = false;
-	
-					while ( $the_query->have_posts() ) {
-						
-						$the_query->the_post();
-						$this_id = get_the_ID();
-						
-						//Don't update if 'stop_update' custom field is true
-						if ( ! get_post_meta($this_id, 'fbgrp2wp_stop_update', true) ) {
-						
-							if ( get_post_meta($this_id, 'fbgrp2wp_fb_updated', true) !=  $e_updated ) {
-								$this_event = array(
-									'ID'			=> $this_id,
-									'post_type'		=> 'fbgrp2wp_events',
-									'post_title' 	=> wp_strip_all_tags($e_name),
-									'post_content'	=> wp_strip_all_tags($e_description),
-									'post_status'	=> 'publish',			
-								);
-								wp_update_post( $this_event );
-								$do_update_meta = true;
-							};
-						
-							$this_img = get_post_meta( $this_id, 'fbgrp2wp_fb_cover', true )[0];
-	
-							$e_cover_basename = explode('?', basename($e_cover));
-							$e_cover_basename = reset($e_cover_basename);
-							$this_img_basename = basename($this_img);				
-							$e_cover_basename_noext = pathinfo($e_cover_basename, PATHINFO_FILENAME);
-							
-							if ( (strpos($this_img_basename, $e_cover_basename_noext) === false)  && !empty($e_cover)) {
-								apply_filters('fbgrp2wp_insert_image', $this_id, $e_cover);
-							}
-	
-						}
-	
-					}
-				
-				} else {
-	
-					$this_event = array(
-						'post_type' 	=> 'fbgrp2wp_events',
-						'post_name'		=> $e_id,
-						'post_title' 	=> wp_strip_all_tags($e_name),
-						'post_content' 	=> wp_strip_all_tags($e_description),
-						'post_status' 	=> 'publish',
-					);		
-					$this_id = wp_insert_post($this_event);
-					$do_update_meta = true;
-	
-					if ($e_cover != '') {
-						apply_filters('fbgrp2wp_insert_image', $this_id, $e_cover);
-					}
-	
-				} //END - HAVE POSTS
-	
-				//Update the post metadata.
-				if ($do_update_meta) {
-					update_post_meta($this_id, 'fbgrp2wp_source_url', 'https://www.facebook.com/events/' . $e_id);
-					update_post_meta($this_id, 'fbgrp2wp_start', $e_start_datetime->format('Y-m-d g:ia'));
-					update_post_meta($this_id, 'fbgrp2wp_location', $e_location);
-					update_post_meta($this_id, 'fbgrp2wp_lat', $e_latitude);
-					update_post_meta($this_id, 'fbgrp2wp_lng', $e_longitude);
-					update_post_meta($this_id, 'fbgrp2wp_fb_id', $e_id);
-					update_post_meta($this_id, 'fbgrp2wp_fb_updated', $e_updated);
-				}
+
+				// Add comments to post
+				if ($post_attachments) {
+					apply_filters('fbgrp2wp_insert_comments', $this_id, $post_comments, 0);
+				}	
+
+				// Add metadata to post.
+				update_post_meta($this_id, 'fbgrp2wp_fb_id', $post_id);
 	
 				if ($echo_results) {
 					echo '</p>';
 					echo '<script type="text/javascript">window.scrollTo(0,document.body.scrollHeight);</script>';
 				}
-				if ($before_today) {
-					break;
-				}
 	
-			} //END - EACH EVENT
+			} //END - EACH POST
 	
 			if ($echo_results) {
 				echo '</div>';
 			}
 	
 			do_action('fbgrp2wp_log', trim($log));
-			do_action('fbgrp2wp_log', 'Finish fbgrp2wp_process_events' . PHP_EOL, true);
+			do_action('fbgrp2wp_log', 'fbgrp2wp_process_events - Finish' . PHP_EOL, true);
 	
 		}
 

@@ -167,8 +167,10 @@ class Fbgrp2wp {
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'fbgrp2wp_admin' );
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'fbgrp2wp_admin_settings' );
 
-		// Primary methods - import events and generate JSON
+		// Primary methods - import events + insert media + insert comments
 		$this->loader->add_action( 'fbgrp2wp_import_group_posts', $plugin_admin, 'fbgrp2wp_import_group_posts' );
+		$this->loader->add_filter( 'fbgrp2wp_insert_media', $plugin_admin, 'fbgrp2wp_insert_media', 10, 2 );
+		$this->loader->add_filter( 'fbgrp2wp_insert_comments', $plugin_admin, 'fbgrp2wp_insert_comments', 10, 3 );
 
 		// Exchange short-lived FB token for long-lived FB token
 		$this->loader->add_action( 'wp_ajax_fbgrp2wp_fb_tokenexchange', $plugin_admin, 'fbgrp2wp_fb_tokenexchange' );
