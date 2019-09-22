@@ -48,9 +48,13 @@ if (isset($_POST['import'])) {
 				<input type='text' name='fb_group_id' id='fb_group_id' value='<?php echo esc_attr( get_option('fb_group_id') ); ?>' />
 			</div>
 			<div>
-				<label for="fb_get_events">Number of Facebook events to request</label>
-				<span>More events leads to a slower request time. Less than 200 recommended. Use the <a href="https://developers.facebook.com/tools/explorer/">Facebook Graph API Explorer</a> to check request time.
+				<label for="fb_get_events">Number of Facebook posts to request</label>
+				<span>More events leads to a slower processing time.</span> 
 				<input type='text' name='fb_get_events' id='fb_get_events' value='<?php echo esc_attr( get_option('fb_get_events') ); ?>' />
+			</div>
+			<div>
+				<label for="fb_get_requests">Number of Facebook posts to request per page</label>
+				<input type='text' name='fb_get_requests' id='fb_get_requests' value='<?php echo esc_attr( get_option('fb_get_requests') ); ?>' />
 			</div>
 		</div>
 		<?php submit_button( 'Save settings', 'primary', 'save', false ); ?>

@@ -87,6 +87,7 @@ class Fbgrp2wp_Admin {
 			register_setting( 'fbgrp2wp-group', 'fb_app_secret' );
 			register_setting( 'fbgrp2wp-group', 'fb_group_id' );
 			register_setting( 'fbgrp2wp-group', 'fb_get_events' );
+			register_setting( 'fbgrp2wp-group', 'fb_get_requests' );
 		}
 	
 		public function fbgrp2wp_admin_enqueue_styles() {
@@ -204,7 +205,9 @@ class Fbgrp2wp_Admin {
 				set_time_limit(15);		
 
 				if ($attachment['subattachments']) {
-					
+
+					// Standard gallery post
+
 					foreach ($attachment['subattachments'] as $k => $subattachment) {
 
 						/*
@@ -254,11 +257,108 @@ class Fbgrp2wp_Admin {
 
 					}
 
-				} else {
+				} elseif ($attachment['media']['source']) {
+
+					// Video post
+
+					/*
+					* Build the $file_array with
+					* $url = the url of the image
+					* $temp = storing the image in wordpress
+					*/
 					
-					if($attachment['media']['source']){
-						// Nothing
+					$url = $attachment['media']['source'];
+					$tmp = download_url( $url );
+					$path_noquery = explode("?", $url);
+					$filename = basename($path_noquery[0]);
+
+					$file_array = array(
+						'name' => $filename,
+						'tmp_name' => $tmp
+					);
+					
+					// Check for download errors, if there are error unlink the temp file name
+					if ( is_wp_error( $tmp ) ) {
+						@unlink( $file_array[ 'tmp_name' ] );
+						//return $tmp;
+						echo 'ONE:';
+						print_r($tmp);
 					}
+					
+					/**
+					 * now we can actually use media_handle_sideload
+					 * we pass it the file array of the file to handle
+					 * and the post id of the post to attach it to
+					 * $post_id can be set to '0' to not attach it to any particular post
+					 */			
+					$id = media_handle_sideload( $file_array, $post_id );
+					
+					/**
+					 * We don't want to pass something to $id
+					 * if there were upload errors.
+					 * So this checks for errors
+					 */
+					if ( is_wp_error( $id ) ) {
+						@unlink( $file_array['tmp_name'] );
+						//return $id;
+						echo 'TWO:';
+						print_r($id);
+					}
+
+				} elseif ($attachment['media']['image']['src'] && !$attachment['media']['source']) {
+
+					// Post on single image from existing gallery.
+
+					/*
+					* Build the $file_array with
+					* $url = the url of the image
+					* $temp = storing the image in wordpress
+					*/
+					
+
+					$url = $attachment['media']['image']['src'];
+					$tmp = download_url( $url );
+					$path_noquery = explode("?", $url);
+					$filename = basename($path_noquery[0]);
+
+					$file_array = array(
+						'name' => $filename,
+						'tmp_name' => $tmp
+					);
+
+					// Check for download errors, if there are error unlink the temp file name
+					if ( is_wp_error( $tmp ) ) {
+						@unlink( $file_array[ 'tmp_name' ] );
+						//return $tmp;
+						echo 'Error: ';
+						print_r($tmp);
+						echo '<br />: ';
+					}
+					
+					/**
+					 * now we can actually use media_handle_sideload
+					 * we pass it the file array of the file to handle
+					 * and the post id of the post to attach it to
+					 * $post_id can be set to '0' to not attach it to any particular post
+					 */			
+					$id = media_handle_sideload( $file_array, $post_id );
+					
+					/**
+					 * We don't want to pass something to $id
+					 * if there were upload errors.
+					 * So this checks for errors
+					 */
+					if ( is_wp_error( $id ) ) {
+						@unlink( $file_array['tmp_name'] );
+						//return $id;
+						echo 'Error: ';
+						print_r($id);
+						echo '<br />: ';
+					}
+
+				} else {
+
+					// Do nothing
 
 				}
 
@@ -333,7 +433,7 @@ class Fbgrp2wp_Admin {
 				get_option('fb_group_id') . '/feed',
 				array(
 					'fields' => 'updated_time,message,id,link,attachments{media,subattachments,title},comments{id,created_time,message,comments{id,created_time,user_likes,message,comments}}',
-					'limit' => get_option('fb_get_events')
+					'limit' => get_option('fb_get_requests')
 				)
 			);
 	
@@ -367,66 +467,89 @@ class Fbgrp2wp_Admin {
 			$posts = $response->getGraphEdge();
 			
 			//Set some vars
-			$totalPosts = count($posts);
+			$totalPosts = 0;
 			$today = new DateTime(current_time('Y-m-d'));
+			$page = 0;
+
+			do {
+
+				++$page;
+
+				//Cycle through each post
+				foreach ($posts as $index => $post) {
+		
+					// Set the max script timeout to 15s from now
+					set_time_limit(15);
+					
+					// Increment the total post counter
+					++$totalPosts;
+
+					// Basic fields
+					$post_id 			= $post['id'];
+					$post_link			= $post['link'];
+					$post_message		= $post['message'];
+					$post_attachments	= $post['attachments'];
+					$post_comments		= $post['comments'];
+
+					do_action('fbgrp2wp_log', 'fbgrp2wp_process_events - Processing post ' . $totalPosts . ' (' . $post_id . ')', true);
+					if ($echo_results) {
+						echo '<p>Processing post ' . $totalPosts . ' (' . $post_id . ').<br />';
+						flush();
+					}
+
+					// If no attachments, then skip
+					// *********** TURN INTO ADMIN OPTION
+					//if (!$post_attachments) { continue; }
+
+					// Date
+					$post_updated 	= $post['updated_time']->format('Y-m-d g:ia');				
+
+					// Check post doesn't already exist
+					$existingPost = get_page_by_title(wp_strip_all_tags($post_id), OBJECT, 'fbgrp2wp_posts');
+					if ($existingPost) {
+						do_action('fbgrp2wp_log', 'fbgrp2wp_process_events - Post exists already, not imported', true);
+						break;
+					}					
+
+					// Insert the new post
+					$this_post = array(
+						'post_type' 		=> 'fbgrp2wp_posts',
+						'post_name'			=> $post_id,
+						'post_date'			=> $post_updated,
+						'post_title' 		=> wp_strip_all_tags($post_id),
+						'post_content' 		=> wp_strip_all_tags($post_message),
+						'comment_status'	=> 'closed',
+						'post_status' 		=> 'publish',
+					);		
+					$this_id = wp_insert_post($this_post);
+
+					// Add media to post
+					if ($post_attachments) {
+						apply_filters('fbgrp2wp_insert_media', $this_id, $post_attachments);
+					}
+
+					// Add comments to post
+					if ($post_comments) {
+						apply_filters('fbgrp2wp_insert_comments', $this_id, $post_comments, 0);
+					}	
+
+					// Add metadata to post.
+					update_post_meta($this_id, 'fbgrp2wp_fb_id', $post_id);
+		
+					if ($echo_results) {
+						echo '</p>';
+						echo '<script type="text/javascript">window.scrollTo(0,document.body.scrollHeight);</script>';
+						flush();
+					}
+		
+				} //END - EACH POST
 	
-			//Cycle through each post
-			foreach ($posts as $index => $post) {
-	
-				if ($echo_results) {
-					echo '<p>Processing post ' . (intval($index) + 1) . ' of ' . (intval($totalPosts)) . '<br />';
-					flush();
+				if (($page * get_option('fb_get_requests')) > get_option('fb_get_events')) {
+					break;
 				}
-	
-				// Set the max script timeout to 15s from now
-				set_time_limit(15);
 				
-				// Basic fields
-				$post_id 			= $post['id'];
-				$post_link			= $post['link'];
-				$post_message		= $post['message'];
-				$post_attachments	= $post['attachments'];
-				$post_comments		= $post['comments'];
+			} while ($posts = $fb->next($posts));
 
-				// If no attachments, then skip
-				// *********** TURN INTO ADMIN OPTION
-				if (!$post_attachments) { continue; }
-
-				// Date
-				$post_updated 	= $post['updated_time']->format('Y-m-d g:ia');				
-
-				// Insert the new post
-				$this_post = array(
-					'post_type' 		=> 'fbgrp2wp_posts',
-					'post_name'			=> $post_id,
-					'post_date'			=> $post_updated,
-					'post_title' 		=> wp_strip_all_tags($post_id),
-					'post_content' 		=> wp_strip_all_tags($post_message),
-					'comment_status'	=> 'closed',
-					'post_status' 		=> 'publish',
-				);		
-				$this_id = wp_insert_post($this_post);
-
-				// Add media to post
-				if ($post_attachments) {
-					apply_filters('fbgrp2wp_insert_media', $this_id, $post_attachments);
-				}
-
-				// Add comments to post
-				if ($post_attachments) {
-					apply_filters('fbgrp2wp_insert_comments', $this_id, $post_comments, 0);
-				}	
-
-				// Add metadata to post.
-				update_post_meta($this_id, 'fbgrp2wp_fb_id', $post_id);
-	
-				if ($echo_results) {
-					echo '</p>';
-					echo '<script type="text/javascript">window.scrollTo(0,document.body.scrollHeight);</script>';
-				}
-	
-			} //END - EACH POST
-	
 			if ($echo_results) {
 				echo '</div>';
 			}
