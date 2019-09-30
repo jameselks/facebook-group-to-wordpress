@@ -1,3 +1,5 @@
+# Get your group out of Facebook
+
 === Plugin Name ===
 Contributors: (this should be a list of wordpress.org userid's)
 Donate link: jameselks.com
