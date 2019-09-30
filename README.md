@@ -1,7 +1,10 @@
 # Get your group out of Facebook
 
+> Detail to come. Still a work in progress.
+
 === Plugin Name ===
-Contributors: (this should be a list of wordpress.org userid's)
+
+Contributors: ...
 Donate link: jameselks.com
 Tags: comments, spam
 Requires at least: 3.0.1
