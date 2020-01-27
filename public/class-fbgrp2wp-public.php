@@ -93,7 +93,8 @@ class Fbgrp2wp_Public {
 				'public' 	=> true,
 				'show_ui'	=> true,
 				'supports' 	=> array( 'title', 'editor', 'author', 'thumbnail', 'comments', 'custom-fields' ),
-				'has_archive' => true,
+				'publicly_queryable'  => false,
+				'has_archive' => false,
 				)
 			);
 	}
