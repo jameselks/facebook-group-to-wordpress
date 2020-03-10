@@ -1,7 +1,7 @@
 # Get your group out of Facebook
 
-> Detail to come. Still a work in progress.
-> Takes a Facebook Group and gracefully inserts it into Wordpress.
+> Work in progress.
+> Takes a Facebook Group and gracefully inserts each post into Wordpress.
 
 ## Facebook Group to Wordpress
 
@@ -16,7 +16,14 @@ Import posts from a Facebook Group to Wordpress. Each Facebook post becomes a po
 
 ## Description
 
-To come...
+Import posts from a Facebook Group feed into posts in Wordpress.
+
+* Each post in the feed becomes a post in Wordpress.
+* Imports words, images, video and comments (including Emoji).
+
+### Limitations
+
+* Facebook will not allow you to access the authors of comments on a Facebook group. So it will bring in the comment, but the comment cannot be attributed to someone.
 
 ## Installation
 
